@@ -1,68 +1,49 @@
-const mongoose = require('mongoose');
+const express = require('express');
+const bodyParser = require('body-parser');
 
-mongoose.Promise = global.Promise; // We are telling the mongoose that we are using the global promise
+const {mongoose} = require('./db/mongoose');
+const {User} = require('./models/user');
+const {Todo} = require('./models/todo');
 
-mongoose.connect('mongodb://localhost:27017/TodoApp')
-	.then(() => {
-		console.log('Connected to database successfully...');
-	}, (e) => {
-		console.log('Error connecting to database...', e);
-	});
+const app = express();
 
-const Todo = mongoose.model('Todo', {
-	text: {
-		type: String,
-		trim: true,
-		minlength: 1,
-		required: true
-	},
-	completed: {
-		type: Boolean,
-		default: false
-	},
-	completedAt: {
-		type: Number,
-		default: null
-	}
+app.use(bodyParser.json());
+
+app.get('/', (req, res) => {
+	res.send('Test');
 });
 
-const User = mongoose.model('User', new mongoose.Schema({
-	name: {
-		type: String,
-		required: true, // meaniing that the attribute should be there. Otherwise, a vlidationerror will be thrown
-		minlength: 1,
-		trim: true
-	}
-}));
-
-const user = new User({
-	name: "Anuj"
+app.listen(3000, () => {
+	console.log('Listening on port 3000');
 });
+// const user = new User({
+// 	name: "Anuj"
+// });
 
-const todo = new Todo({
-	text: 5,
-	completed: false
-});
+// const todo = new Todo({
+// 	text: 5,
+// 	completed: false
+// });
 
-todo.save()
-	.then((result) => {
-		if (!result) {
-			return console.log('Unable to save the record');
-		}
-		console.log(result);
-	})
-	.catch((e) => {
-		console.log('Some error occurred');
-	});
+// todo.save()
+// 	.then((result) => {
+// 		if (!result) {
+// 			return console.log('Unable to save the record');
+// 		}
+// 		console.log(result);
+// 	})
+// 	.catch((e) => {
+// 		console.log('Some error occurred');
+// 	});
 
-user.save()
-	.then((result) => {
-		if (!result) {
-			return console.log('Unable to save the record');
-		}
-		console.log(result);
-	})
-	.catch((e) => {
-		console.log('Some error occurred');
-	});
+// user.save()
+// 	.then((result) => {
+// 		if (!result) {
+// 			return console.log('Unable to save the record');
+// 		}
+// 		console.log(result);
+// 	})
+// 	.catch((e) => {
+// 		console.log('Some error occurred');
+// 	});
 
