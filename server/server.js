@@ -1,15 +1,26 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const {ObjectID} = require('mongodb');
+const _ = require('lodash');
 
-const {mongoose} = require('./db/mongoose');
 const {User} = require('./models/user');
 const {Todo} = require('./models/todo');
 
 const app = express();
 
-const port = process.env.PORT || 3000;
+const env = process.env.NODE_ENV || 'development';
 
+if (env === 'development') {
+	process.env.port = 3000;
+	process.env.MONGODB_URI = 'mongodb://localhost:27017/TodoApp';
+} else if (env === 'test') {
+	process.env.port = 3000;
+	process.env.MONGODB_URI = 'mongodb://localhost:27017/TodoAppTest';
+}
+
+const port = process.env.PORT;
+
+const {mongoose} = require('./db/mongoose');
 app.use(bodyParser.json());
 
 // three cases -
@@ -61,6 +72,38 @@ app.post('/todos', (req, res) => {
 		}, (e) => {
 			res.status(404).send();
 			// console.log('Error in saving the record - POST - TODOs ', e);
+		});
+});
+
+app.patch('/todos/:id', (req, res) => {
+	const id = req.params.id;
+
+	if (!ObjectID.isValid(id)) {
+		return res.status(400).send();
+	}
+
+	const body = _.pick(req.body, ['text', 'completed']);
+
+	if (_.isBoolean(body.completed) && body.completed) {
+		body.completedAt = new Date().getTime(); // if we get a flag for whether it is completed, then we should update the completedAt time
+	} else {
+		body.completedAt = null; // otherwise set it to defaults
+		body.completed = false;
+	}
+
+	Todo.findByIdAndUpdate(id, {
+			$set: body // this is an object. it updates all the attributes in the body accordingly
+		}, {
+			new: true
+		})
+		.then((result) => {
+			if (!result) {
+				return res.status(404).send();
+			}
+			res.send({result});
+		})
+		.catch((e) => {
+			res.status(400).send();
 		});
 });
 
