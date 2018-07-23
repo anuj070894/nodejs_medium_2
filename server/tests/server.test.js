@@ -137,4 +137,47 @@ describe('TodoApp Api Tests', () => {
 				.end(done);
 		});
 	});
+
+	describe('DELETE /todos/:id', () => {
+		it('shooud remove a todo', (done) => {
+			const id = todos[0]._id.toHexString();
+			request(app)
+				.delete(`/todos/${id}`)
+				.expect(200)
+				.expect((res) => {
+					expect(res.body.result._id).toBe(id);
+				})
+				.end((err, result) => {
+					if (err) {
+						return done(err);
+					}
+					Todo.findById(id)
+						.then((result) => {
+							expect(result).toNotExist();
+							done();
+						})
+						.catch((e) => {
+							done(e);
+						});
+				});
+		});
+
+		it('should return 404 if the id is not found', (done) => {
+			const id = 123;
+			const text = todos[0].text;
+			request(app)
+				.delete(`/todos/${id}`)
+				.expect(400)
+				.end(done);
+		});
+
+		it('should return 404 if the record is not found', (done) => {
+			const id = '5b558284986aada89ed7976a';
+			const text = todos[0].text;
+			request(app)
+				.delete(`/todos/${id}`)
+				.expect(404)
+				.end(done);
+		});
+	});
 });
