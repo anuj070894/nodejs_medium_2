@@ -1,17 +1,46 @@
 const expect = require('expect');
 const request = require('supertest');
+const {ObjectID} = require('mongodb');
 
 const {app} = require('../server');
 const {Todo} = require('../models/todo');
+const todos = [
+	{
+		"text": "Todo1",
+		"_id": new ObjectID()
+	}, {
+		"text": "Todo2",
+		"_id": new ObjectID()
+	}, {
+		"text": "Todo3",
+		"_id": new ObjectID()
+	}
+];
 
 beforeEach((done) => {
+
 	Todo.remove({})
 		.then(() => {
-			done(); // it runs before each test. and it runs the tests only when the done is called
+			return Todo.insertMany(todos);
+		})
+		.then(() => {
+			done();
 		}); // removing all the data to give a fresh start
 });
 
 describe('TodoApp Api Tests', () => {
+	describe('GET /todos', () => {
+		it('should get all the todos', (done) => {
+			request(app)
+				.get('/todos')
+				.expect(200)
+				.expect((res) => {
+					expect(res.body.results.length).toBe(3);
+				})
+				.end(done);
+		});
+	});
+
 	describe('POST /todos', () => {
 		it('should create a new todo', (done) => {
 			const text = 'This is a test todo';
@@ -28,7 +57,7 @@ describe('TodoApp Api Tests', () => {
 					if (err) {
 						return done(err);
 					}
-					Todo.find()
+					Todo.find({text})
 						.then((results) => {
 							if (!results) {
 								return done('No result found');
@@ -53,13 +82,59 @@ describe('TodoApp Api Tests', () => {
 					Todo.find()
 						.then((results) => {
 							if (!results) {
-								console.log(results, 1);
 								return done('No result found');
 							}
-							expect(results.length).toBe(0);
+							expect(results.length).toBe(3);
 							done();
 						});
 				})
+		});
+	});
+
+	describe('GET /todos/:id', () => {
+		it('shooud return a valid todo', (done) => {
+			const id = todos[0]._id;
+			const text = todos[0].text;
+			request(app)
+				.get(`/todos/${id}`)
+				.expect(200)
+				.expect((res) => {
+					expect(res.body.result.text).toBe(text);
+				})
+				.end((err, result) => {
+					if (err) {
+						return done(err);
+					}
+					Todo.findById(id)
+						.then((result) => {
+							if (!result) {
+								return done(err);
+							}
+							expect(result.text).toBe(text);
+							done();
+						})
+						.catch((e) => {
+							done(e);
+						});
+				});
+		});
+
+		it('should return 404 if the id is not valid', (done) => {
+			const id = 123;
+			const text = todos[0].text;
+			request(app)
+				.get(`/todos/${id}`)
+				.expect(400)
+				.end(done);
+		});
+
+		it('should return 404 if the record is not found', (done) => {
+			const id = '5b558284986aada89ed7976e';
+			const text = todos[0].text;
+			request(app)
+				.get(`/todos/${id}`)
+				.expect(404)
+				.end(done);
 		});
 	});
 });
