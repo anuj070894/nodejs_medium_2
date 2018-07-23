@@ -9,41 +9,23 @@ const app = express();
 
 app.use(bodyParser.json());
 
-app.get('/', (req, res) => {
-	res.send('Test');
+app.post('/todos', (req, res) => {
+	const todo = new Todo({
+		text: req.body.text
+	});
+	todo.save()
+		.then((result) => {
+			res.send({result}); // {result: record} .. that is being saved into the database
+		}, (e) => {
+			res.status(404).send();
+			// console.log('Error in saving the record - POST - TODOs ', e);
+		});
 });
 
 app.listen(3000, () => {
 	console.log('Listening on port 3000');
 });
-// const user = new User({
-// 	name: "Anuj"
-// });
 
-// const todo = new Todo({
-// 	text: 5,
-// 	completed: false
-// });
-
-// todo.save()
-// 	.then((result) => {
-// 		if (!result) {
-// 			return console.log('Unable to save the record');
-// 		}
-// 		console.log(result);
-// 	})
-// 	.catch((e) => {
-// 		console.log('Some error occurred');
-// 	});
-
-// user.save()
-// 	.then((result) => {
-// 		if (!result) {
-// 			return console.log('Unable to save the record');
-// 		}
-// 		console.log(result);
-// 	})
-// 	.catch((e) => {
-// 		console.log('Some error occurred');
-// 	});
-
+module.exports = {
+	app
+};
